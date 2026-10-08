@@ -1,0 +1,16 @@
+[project]
+name = "llm"
+version = "0.1.0"
+description = "LLM gateway (Claude)"
+requires-python = ">=3.12"
+dependencies = ["mega-common", "anthropic>=1.12"]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "llm_service"
+
+[tool.uv.sources]
+mega-common = { workspace = true }

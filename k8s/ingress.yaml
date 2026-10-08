@@ -1,0 +1,15 @@
+# ingress-nginx on kind. *.localtest.me resolves to 127.0.0.1, so no /etc/hosts edits.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: megathon
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600" # long-lived collab websockets
+spec:
+  ingressClassName: nginx
+  rules:
+    - { host: kestrel.localtest.me, http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: kestrel, port: { number: 3000 } } } }] } }
+    - { host: boli.localtest.me, http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: boli, port: { number: 3000 } } } }] } }
+    - { host: onboard.localtest.me, http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: onboard, port: { number: 3000 } } } }] } }
+    - { host: margin.localtest.me, http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: margin, port: { number: 3000 } } } }] } }
+    - { host: collab.localtest.me, http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: collab, port: { number: 8004 } } } }] } }

@@ -1,0 +1,30 @@
+{
+  "name": "boli",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mega/platform": "*",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "motion": "^12",
+    "@phosphor-icons/react": "^2"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "tailwindcss": "^4",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "typescript": "^5"
+  }
+}

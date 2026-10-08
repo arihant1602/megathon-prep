@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: kestrel }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: kestrel } }
+  template:
+    metadata: { labels: { app: kestrel } }
+    spec:
+      containers:
+        - name: kestrel
+          image: megathon-kestrel:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          env:
+            - { name: BETTER_AUTH_URL, value: "http://kestrel.localtest.me:8080" }
+          ports: [{ containerPort: 3000 }]
+          readinessProbe: { httpGet: { path: /api/health, port: 3000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: kestrel }
+spec:
+  selector: { app: kestrel }
+  ports: [{ port: 3000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: boli }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: boli } }
+  template:
+    metadata: { labels: { app: boli } }
+    spec:
+      containers:
+        - name: boli
+          image: megathon-boli:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          env:
+            - { name: BETTER_AUTH_URL, value: "http://boli.localtest.me:8080" }
+          ports: [{ containerPort: 3000 }]
+          readinessProbe: { httpGet: { path: /api/health, port: 3000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: boli }
+spec:
+  selector: { app: boli }
+  ports: [{ port: 3000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: onboard }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: onboard } }
+  template:
+    metadata: { labels: { app: onboard } }
+    spec:
+      containers:
+        - name: onboard
+          image: megathon-onboard:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          env:
+            - { name: BETTER_AUTH_URL, value: "http://onboard.localtest.me:8080" }
+          ports: [{ containerPort: 3000 }]
+          readinessProbe: { httpGet: { path: /api/health, port: 3000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: onboard }
+spec:
+  selector: { app: onboard }
+  ports: [{ port: 3000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: margin }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: margin } }
+  template:
+    metadata: { labels: { app: margin } }
+    spec:
+      containers:
+        - name: margin
+          image: megathon-margin:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          env:
+            - { name: BETTER_AUTH_URL, value: "http://margin.localtest.me:8080" }
+          ports: [{ containerPort: 3000 }]
+          readinessProbe: { httpGet: { path: /api/health, port: 3000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: margin }
+spec:
+  selector: { app: margin }
+  ports: [{ port: 3000 }]

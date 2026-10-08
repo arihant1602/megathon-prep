@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@source "../../../../packages/platform/src";
+
+/* Boli: cool slate neutrals, single terracotta accent, 14px radius everywhere. */
+:root {
+  --bg: #f4f6f8;
+  --fg: #141a22;
+  --muted: #526070;
+  --line: #dbe2ea;
+  --surface: #fbfcfd;
+  --accent: #c04a29;
+  --accent-fg: #fff8f4;
+  --accent-soft: #f6e4dc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141a;
+    --fg: #e9edf2;
+    --muted: #9ba7b5;
+    --line: #243040;
+    --surface: #151c25;
+    --accent: #ec8a64;
+    --accent-fg: #1b0f09;
+    --accent-soft: #2f1d15;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --radius-ui: 14px;
+  /* Latin first, then each Indic script; the browser picks per glyph. */
+  --font-sans: var(--font-outfit), var(--font-deva), var(--font-telu), var(--font-taml), var(--font-beng), var(--font-knda),
+    var(--font-mlym), var(--font-gujr), var(--font-guru), var(--font-orya), system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marquee-track {
+    animation: marquee 40s linear infinite;
+  }
+}
+
+/* Hero entrance in pure CSS: runs before hydration, so the LCP text is never hidden behind JS. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .rise-late { animation-delay: 0.12s; }
+}

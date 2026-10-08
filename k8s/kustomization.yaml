@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: megathon
+resources: [namespace.yaml, data.yaml, services.yaml, apps.yaml, ingress.yaml]
+# Secrets: copy of the repo-root .env (scripts/k8s-up.sh refreshes it; gitignored).
+secretGenerator:
+  - name: app-env
+    envs: [.env.secret]
+    options: { disableNameSuffixHash: true }
+# In-cluster addresses override the localhost URLs from .env.
+configMapGenerator:
+  - name: app-urls
+    literals:
+      - DATABASE_URL=postgresql://megathon:megathon@postgres:5432/megathon
+      - REDIS_URL=redis://redis:6379/0
+      - RISK_SERVICE_URL=http://risk:8000
+      - LLM_SERVICE_URL=http://llm:8000
+      - BHASHINI_SERVICE_URL=http://bhashini:8000
+      - COLLAB_PUBLIC_URL=ws://collab.localtest.me:8080
+    options: { disableNameSuffixHash: true }

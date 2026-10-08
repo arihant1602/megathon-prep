@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: llm }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: llm } }
+  template:
+    metadata: { labels: { app: llm } }
+    spec:
+      containers:
+        - name: llm
+          image: megathon-llm:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          ports: [{ containerPort: 8000 }]
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: llm }
+spec:
+  selector: { app: llm }
+  ports: [{ port: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: risk }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: risk } }
+  template:
+    metadata: { labels: { app: risk } }
+    spec:
+      containers:
+        - name: risk
+          image: megathon-risk:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          ports: [{ containerPort: 8000 }]
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+          volumeMounts: [{ name: data, mountPath: /data/models }]
+      volumes: [{ name: data, emptyDir: {} }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: risk }
+spec:
+  selector: { app: risk }
+  ports: [{ port: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: bhashini }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: bhashini } }
+  template:
+    metadata: { labels: { app: bhashini } }
+    spec:
+      containers:
+        - name: bhashini
+          image: megathon-bhashini:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          ports: [{ containerPort: 8000 }]
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: bhashini }
+spec:
+  selector: { app: bhashini }
+  ports: [{ port: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: collab }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: collab } }
+  template:
+    metadata: { labels: { app: collab } }
+    spec:
+      containers:
+        - name: collab
+          image: megathon-collab:dev
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ secretRef: { name: app-env } }, { configMapRef: { name: app-urls } }]
+          ports: [{ containerPort: 8004 }]
+          readinessProbe: { httpGet: { path: /health, port: 8004 }, initialDelaySeconds: 3 }
+          resources: { requests: { cpu: 100m, memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: collab }
+spec:
+  selector: { app: collab }
+  ports: [{ port: 8004 }]

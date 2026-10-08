@@ -1,0 +1,12 @@
+**/node_modules
+**/.next
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.models
+**/.env
+.env*
+!.env.example
+.git
+k8s
+deploy

@@ -1,0 +1,16 @@
+[project]
+name = "bhashini"
+version = "0.1.0"
+description = "Bhashini speech and translation gateway"
+requires-python = ">=3.12"
+dependencies = ["mega-common", "redis>=6"]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "bhashini_service"
+
+[tool.uv.sources]
+mega-common = { workspace = true }

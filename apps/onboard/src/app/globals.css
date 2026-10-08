@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@source "../../../../packages/platform/src";
+
+/* Onboard: zinc neutrals, single emerald accent, 4px radius everywhere. */
+:root {
+  --bg: #f4f4f5;
+  --fg: #111113;
+  --muted: #55555e;
+  --line: #dcdce0;
+  --surface: #fafafa;
+  --accent: #0b7a54;
+  --accent-fg: #f2fbf7;
+  --accent-soft: #dcf1e8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b;
+    --fg: #ececee;
+    --muted: #9b9ba6;
+    --line: #232328;
+    --surface: #111114;
+    --accent: #3fd49a;
+    --accent-fg: #06130d;
+    --accent-soft: #0f2a1f;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --radius-ui: 4px;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Hero entrance in pure CSS: runs before hydration, so the LCP text is never hidden behind JS. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .rise-late { animation-delay: 0.12s; }
+}

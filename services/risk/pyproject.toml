@@ -1,0 +1,16 @@
+[project]
+name = "risk"
+version = "0.1.0"
+description = "Explainable risk scoring (XGBoost + TreeSHAP)"
+requires-python = ">=3.12"
+dependencies = ["mega-common", "numpy>=2", "pandas>=2.3", "scikit-learn>=1.7", "xgboost-cpu>=3", "python-multipart>=0.0.20"]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "risk_service"
+
+[tool.uv.sources]
+mega-common = { workspace = true }

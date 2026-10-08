@@ -1,0 +1,41 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: cd services && uv sync --all-packages && uv run pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: ci-only-secret-ci-only-secret-ci
+      DATABASE_URL: postgresql://x:x@localhost:5432/x
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build -w apps/kestrel -w apps/boli -w apps/onboard -w apps/margin
+
+  docker:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { file: web, arg: APP=kestrel }
+          - { file: web, arg: APP=boli }
+          - { file: web, arg: APP=onboard }
+          - { file: web, arg: APP=margin }
+          - { file: python, arg: SERVICE=risk }
+          - { file: python, arg: SERVICE=llm }
+          - { file: python, arg: SERVICE=bhashini }
+          - { file: collab, arg: NONE=1 }
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f docker/${{ matrix.file }}.Dockerfile --build-arg ${{ matrix.arg }} .

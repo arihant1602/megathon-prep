@@ -1,0 +1,12 @@
+{
+  "name": "megathon",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*", "services/collab"],
+  "scripts": {
+    "db:generate": "npm run generate -w @mega/platform",
+    "db:migrate": "npm run migrate -w @mega/platform",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

@@ -1,0 +1,85 @@
+# Infra only (for `make dev`):    docker compose up -d
+# Whole stack in containers:      docker compose --profile app up -d --build
+x-svc: &svc
+  env_file: .env
+  restart: unless-stopped
+  profiles: [app]
+x-urls: &urls
+  DATABASE_URL: postgresql://megathon:megathon@postgres:5432/megathon
+  REDIS_URL: redis://redis:6379/0
+  RISK_SERVICE_URL: http://risk:8000
+  LLM_SERVICE_URL: http://llm:8000
+  BHASHINI_SERVICE_URL: http://bhashini:8000
+  COLLAB_PUBLIC_URL: ws://localhost:8004
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: megathon, POSTGRES_PASSWORD: megathon, POSTGRES_DB: megathon }
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U megathon"], interval: 3s, retries: 20 }
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 3s }
+
+  migrate:
+    <<: *svc
+    restart: "no"
+    build: { context: ., dockerfile: docker/web.Dockerfile, args: { APP: kestrel } }
+    image: megathon-kestrel
+    command: ["node", "/migrate/migrate.mjs"]
+    environment: *urls
+    depends_on: { postgres: { condition: service_healthy } }
+
+  llm:
+    <<: *svc
+    build: { context: ., dockerfile: docker/python.Dockerfile, args: { SERVICE: llm } }
+    environment: *urls
+  risk:
+    <<: *svc
+    build: { context: ., dockerfile: docker/python.Dockerfile, args: { SERVICE: risk } }
+    environment: *urls
+    volumes: [models:/data/models]
+  bhashini:
+    <<: *svc
+    build: { context: ., dockerfile: docker/python.Dockerfile, args: { SERVICE: bhashini } }
+    environment: *urls
+    depends_on: { redis: { condition: service_healthy } }
+  collab:
+    <<: *svc
+    build: { context: ., dockerfile: docker/collab.Dockerfile }
+    environment: *urls
+    ports: ["8004:8004"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+
+  kestrel:
+    <<: *svc
+    image: megathon-kestrel
+    environment: { <<: *urls, APP: kestrel, BETTER_AUTH_URL: "http://localhost:3001" }
+    ports: ["3001:3000"]
+    depends_on: { migrate: { condition: service_completed_successfully }, risk: { condition: service_started } }
+  boli:
+    <<: *svc
+    build: { context: ., dockerfile: docker/web.Dockerfile, args: { APP: boli } }
+    environment: { <<: *urls, BETTER_AUTH_URL: "http://localhost:3002" }
+    ports: ["3002:3000"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  onboard:
+    <<: *svc
+    build: { context: ., dockerfile: docker/web.Dockerfile, args: { APP: onboard } }
+    environment: { <<: *urls, BETTER_AUTH_URL: "http://localhost:3003" }
+    ports: ["3003:3000"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  margin:
+    <<: *svc
+    build: { context: ., dockerfile: docker/web.Dockerfile, args: { APP: margin } }
+    environment: { <<: *urls, BETTER_AUTH_URL: "http://localhost:3004" }
+    ports: ["3004:3000"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+
+volumes:
+  pgdata:
+  models:

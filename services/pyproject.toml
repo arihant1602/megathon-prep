@@ -1,0 +1,11 @@
+# uv workspace: one lockfile + one .venv for every Python microservice.
+#   uv sync --all-packages
+#   uv run --package risk uvicorn risk_service.main:app --reload --port 8001
+[tool.uv.workspace]
+members = ["common", "risk", "llm", "bhashini"]
+
+[dependency-groups]
+dev = ["pytest>=9"]
+
+[tool.pytest.ini_options]
+testpaths = ["risk/tests"]

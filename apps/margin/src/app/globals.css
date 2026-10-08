@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@source "../../../../packages/platform/src";
+
+/* Margin: neutral greys, single deep-rose accent, 6px radius everywhere. */
+:root {
+  --bg: #f6f6f7;
+  --fg: #17171a;
+  --muted: #5b5b66;
+  --line: #e1e1e6;
+  --surface: #fdfdfd;
+  --accent: #b2294e;
+  --accent-fg: #fff5f7;
+  --accent-soft: #f7e2e8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d10;
+    --fg: #ebebef;
+    --muted: #9e9ea9;
+    --line: #26262c;
+    --surface: #141418;
+    --accent: #f0739a;
+    --accent-fg: #1a0910;
+    --accent-soft: #2d121b;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --radius-ui: 6px;
+  --font-sans: var(--font-manrope);
+  /* Reading face for document text only: a manuscript surface, not the UI. */
+  --font-serif: var(--font-literata);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Editor surface */
+.prose-doc {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.75;
+  outline: none;
+  min-height: 60dvh;
+}
+.prose-doc > * + * { margin-top: 0.9em; }
+.prose-doc h1, .prose-doc h2, .prose-doc h3 { font-family: var(--font-sans); font-weight: 650; letter-spacing: -0.01em; line-height: 1.25; }
+.prose-doc h1 { font-size: 1.9rem; }
+.prose-doc h2 { font-size: 1.45rem; margin-top: 1.4em; }
+.prose-doc h3 { font-size: 1.2rem; }
+.prose-doc ul { list-style: disc; padding-left: 1.4em; }
+.prose-doc ol { list-style: decimal; padding-left: 1.4em; }
+.prose-doc blockquote { border-left: 3px solid var(--accent); padding-left: 1em; color: var(--muted); }
+.prose-doc code { font-family: ui-monospace, monospace; font-size: 0.9em; background: var(--accent-soft); padding: 0.1em 0.3em; border-radius: 4px; }
+.prose-doc pre { background: var(--surface); border: 1px solid var(--line); padding: 1em; border-radius: 6px; overflow-x: auto; }
+.prose-doc pre code { background: none; padding: 0; }
+.prose-doc p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--muted); float: left; height: 0; pointer-events: none; }
+
+/* Remote cursors from CollaborationCaret */
+.collaboration-carets__caret { position: relative; margin: 0 -1px; border-left: 2px solid; border-right: 0; word-break: normal; pointer-events: none; }
+.collaboration-carets__label { position: absolute; top: -1.4em; left: -2px; font-family: var(--font-sans); font-size: 11px; font-weight: 600; line-height: 1; padding: 3px 5px; border-radius: 4px 4px 4px 0; color: #fff; white-space: nowrap; user-select: none; }
