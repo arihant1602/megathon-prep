@@ -1,0 +1,28 @@
+{
+  "title": "Customer churn",
+  "description": "Probability this customer leaves at renewal",
+  "target": "churned",
+  "features": [
+    "tenure_months",
+    "monthly_premium",
+    "claims_last_year",
+    "support_tickets_90d",
+    "price_increase_pct",
+    "has_autopay"
+  ],
+  "examples": {
+    "tenure_months": 61.0,
+    "monthly_premium": 85.39,
+    "claims_last_year": 0.0,
+    "support_tickets_90d": 1.0,
+    "price_increase_pct": 6.0,
+    "has_autopay": 1.0
+  },
+  "metrics": {
+    "auc": 0.7627,
+    "f1": 0.5118,
+    "accuracy": 0.7233,
+    "positive_rate": 0.2267,
+    "n_rows": 6000
+  }
+}

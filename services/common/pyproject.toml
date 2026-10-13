@@ -3,7 +3,7 @@ name = "mega-common"
 version = "0.1.0"
 description = "Shared settings, auth and app factory"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.143", "uvicorn[standard]>=0.38", "pydantic-settings>=2.11", "httpx>=0.28"]
+dependencies = ["fastapi>=0.143", "uvicorn[standard]>=0.38", "pydantic-settings>=2.11", "httpx>=0.28", "redis>=6", "psycopg[binary,pool]>=3.2"]
 
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]

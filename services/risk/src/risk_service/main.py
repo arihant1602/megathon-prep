@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 
 import pandas as pd
-from fastapi import APIRouter, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
+from fastapi.responses import Response, StreamingResponse
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from mega_common import CommonSettings, call_service, create_app, internal_key_guard
 
+from .extras import sse, simulate, transaction_stream
 from .models import Registry
 
 
@@ -88,6 +90,58 @@ async def train(file: UploadFile, target: str = Form(...), name: str = Form(...)
         raise HTTPException(400, f"target '{target}' not in columns {list(df.columns)}")
     try:
         return await run_in_threadpool(registry.train, df, target, name, title or None, description)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+class CounterfactualIn(ScoreIn):
+    target: float = 0.35
+
+
+@router.post("/counterfactual")
+def counterfactual(body: CounterfactualIn):
+    """'What would have to change for this to be approved?' Up to 3 feature moves."""
+    return registry.counterfactual(_model(body.model), body.features, body.target)
+
+
+@router.get("/fairness")
+def fairness(model: str, group_feature: str):
+    meta = registry.models[_model(model)][1]
+    if group_feature not in meta["features"]:
+        raise HTTPException(400, f"group_feature must be one of {meta['features']}")
+    return registry.fairness(model, group_feature)
+
+
+@router.get("/synthesize")
+def synthesize(model: str, n: int = Query(500, ge=1, le=100000)):
+    """Synthetic rows as CSV: realistic demo data when you cannot use real customer data."""
+    df = registry.synthesize(_model(model), n)
+    return Response(df.to_csv(index=False), media_type="text/csv", headers={"content-disposition": f'attachment; filename="{model}-synthetic-{n}.csv"'})
+
+
+@router.get("/stream")
+async def stream(rate: float = Query(2.0, gt=0, le=20)):
+    """Server-sent events: synthetic card transactions scored live by the fraud model."""
+    return StreamingResponse(sse(transaction_stream(registry, rate)), media_type="text/event-stream")
+
+
+class SimulateIn(BaseModel):
+    initial: float = 100000
+    monthly: float = 10000
+    years: int = 15
+    weights: dict[str, float] = {"equity": 0.6, "debt": 0.3, "gold": 0.1}
+    goal: float | None = 5000000
+    inflation: float = 0.05
+    paths: int = 3000
+    assumptions: dict[str, tuple[float, float]] | None = None
+
+
+@router.post("/simulate")
+def simulate_portfolio(body: SimulateIn):
+    if not 1 <= body.years <= 50:
+        raise HTTPException(400, "years must be 1 to 50")
+    try:
+        return simulate(body.initial, body.monthly, body.years, body.weights, body.goal, body.inflation, min(body.paths, 20000), body.assumptions)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
 

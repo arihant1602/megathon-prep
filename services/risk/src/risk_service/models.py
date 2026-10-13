@@ -44,6 +44,9 @@ class Registry:
                 b = xgb.Booster()
                 b.load_model(d / "model.json")
                 self.models[d.name] = (b, json.loads((d / "meta.json").read_text()))
+        # Models saved by an older version lack quantiles: retrain the demos.
+        for name in [n for n, (_, m) in self.models.items() if "quantiles" not in m and n in ("fraud", "churn")]:
+            del self.models[name]
         if "fraud" not in self.models:
             self.train(demo_fraud(), "is_fraud", "fraud", "Card fraud", "Probability this transaction is fraudulent")
         if "churn" not in self.models:
@@ -89,7 +92,9 @@ class Registry:
             "positive_rate": round(float(y.mean()), 4),
             "n_rows": int(len(df)),
         }
+        qs = [0.05, 0.25, 0.5, 0.75, 0.95]
         meta = {
+            "quantiles": {c: [round(float(X[c].quantile(q)), 3) for q in qs] for c in X.columns},
             "title": title or name.replace("_", " ").capitalize(),
             "description": description,
             "target": target,
@@ -101,6 +106,7 @@ class Registry:
         d.mkdir(parents=True, exist_ok=True)
         booster = clf.get_booster()
         booster.save_model(d / "model.json")
+        X_te.assign(**{target: y_te}).to_csv(d / "test.csv", index=False)
         (d / "meta.json").write_text(json.dumps(meta, indent=2))
         self.models[name] = (booster, meta)
         return self.public_meta(name)
@@ -128,6 +134,75 @@ class Registry:
         )
         band = "high" if score >= 0.7 else "medium" if score >= 0.35 else "low"
         return {"model": name, "score": round(score, 4), "band": band, "base_value": round(float(raw[-1]), 4), "contributions": contributions}
+
+
+    def counterfactual(self, name: str, features: dict[str, float], target: float = 0.35, max_changes: int = 3) -> dict:
+        """Greedy search: smallest set of single-feature moves (to observed quantiles) that brings the score under target."""
+        _, meta = self.models[name]
+        current = {c: float(features.get(c, meta["examples"][c])) for c in meta["features"]}
+        start = self.score(name, current)["score"]
+        changes, score = [], start
+        for _ in range(max_changes):
+            if score < target:
+                break
+            best = None
+            for c in meta["features"]:
+                if any(ch["feature"] == c for ch in changes):
+                    continue
+                for v in meta["quantiles"][c]:
+                    if v == current[c]:
+                        continue
+                    trial = {**current, c: v}
+                    sc = self.score(name, trial)["score"]
+                    if best is None or sc < best[2]:
+                        best = (c, v, sc)
+            if not best or best[2] >= score:
+                break
+            c, v, sc = best
+            changes.append({"feature": c, "label": FEATURE_LABELS.get(c, c), "from": current[c], "to": v, "score_after": round(sc, 4)})
+            current[c], score = v, sc
+        return {"model": name, "start_score": round(start, 4), "end_score": round(score, 4), "target": target,
+                "reached": score < target, "changes": changes}
+
+    def fairness(self, name: str, group_feature: str) -> dict:
+        """Per-group outcome rates on the held-out split (binary feature, or split at the median)."""
+        booster, meta = self.models[name]
+        df = pd.read_csv(self.root / name / "test.csv")
+        y = df.pop(meta["target"]).to_numpy()
+        pred = booster.predict(xgb.DMatrix(df[meta["features"]], feature_names=meta["features"])) >= 0.5
+        col = df[group_feature]
+        binary = set(col.unique()) <= {0, 1}
+        cut = 0.5 if binary else float(col.median())
+        groups = {}
+        for label, mask in ((f"{group_feature} = 1" if binary else f"{group_feature} > {cut:g}", col > cut),
+                            (f"{group_feature} = 0" if binary else f"{group_feature} <= {cut:g}", col <= cut)):
+            m = mask.to_numpy()
+            yt, yp = y[m], pred[m]
+            pos, neg = (yt == 1).sum(), (yt == 0).sum()
+            groups[label] = {
+                "n": int(m.sum()),
+                "flagged_rate": round(float(yp.mean()), 4) if m.sum() else None,
+                "actual_rate": round(float(yt.mean()), 4) if m.sum() else None,
+                "true_positive_rate": round(float((yp & (yt == 1)).sum() / pos), 4) if pos else None,
+                "false_positive_rate": round(float((yp & (yt == 0)).sum() / neg), 4) if neg else None,
+            }
+        rates = [g["flagged_rate"] for g in groups.values() if g["flagged_rate"]]
+        di = round(min(rates) / max(rates), 4) if len(rates) == 2 and max(rates) else None
+        return {"model": name, "group_feature": group_feature, "groups": groups, "disparate_impact": di,
+                "note": "Disparate impact under 0.8 is the usual four-fifths red flag."}
+
+    def synthesize(self, name: str, n: int) -> pd.DataFrame:
+        if name == "fraud":
+            return demo_fraud(n, seed=int(np.random.default_rng().integers(1e6)))
+        if name == "churn":
+            return demo_churn(n, seed=int(np.random.default_rng().integers(1e6)))
+        _, meta = self.models[name]
+        rng = np.random.default_rng()
+        cols = {}
+        for c in meta["features"]:  # sample uniformly between observed 5th and 95th percentiles
+            q = meta["quantiles"][c]
+            cols[c] = rng.uniform(q[0], q[-1], n).round(3)
+        return pd.DataFrame(cols)
 
 
 def demo_fraud(n: int = 6000, seed: int = 7) -> pd.DataFrame:
@@ -168,3 +243,4 @@ def demo_churn(n: int = 6000, seed: int = 11) -> pd.DataFrame:
     )
     df["churned"] = rng.binomial(1, 1 / (1 + np.exp(-logit)))
     return df
+

@@ -1,0 +1,28 @@
+{
+  "title": "Card fraud",
+  "description": "Probability this transaction is fraudulent",
+  "target": "is_fraud",
+  "features": [
+    "amount",
+    "hour",
+    "account_age_days",
+    "txns_last_24h",
+    "distance_from_home_km",
+    "is_foreign"
+  ],
+  "examples": {
+    "amount": 1068.91,
+    "hour": 12.0,
+    "account_age_days": 1517.0,
+    "txns_last_24h": 2.0,
+    "distance_from_home_km": 14.3,
+    "is_foreign": 0.0
+  },
+  "metrics": {
+    "auc": 0.7888,
+    "f1": 0.473,
+    "accuracy": 0.7642,
+    "positive_rate": 0.1707,
+    "n_rows": 6000
+  }
+}

@@ -1,0 +1,16 @@
+[project]
+name = "knowledge"
+version = "0.1.0"
+description = "Files, retrieval and cited answers"
+requires-python = ">=3.12"
+dependencies = ["mega-common", "python-multipart>=0.0.20"]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "knowledge_service"
+
+[tool.uv.sources]
+mega-common = { workspace = true }
